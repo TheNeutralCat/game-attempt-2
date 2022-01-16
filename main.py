@@ -1,6 +1,7 @@
 import time
 import random
 import json
+from items import itemData
 from items import *
 from commands import *
 from functions import *
@@ -19,13 +20,13 @@ firstTimeEnteringRoom = True
 
 while True:
   playerCoords = (playerX,playerY)
-  currentRoomItems = getRoomItems(playerCoords, True)
+  currentRoomItems = getRoomItems(playerCoords, True, itemData)
 
   if firstTimeEnteringRoom == True:
     print(getRoomName(playerCoords))
     print(getRoomDesc(playerCoords))
     print(printRoomExits(playerCoords))
-    getRoomItems(playerCoords, False)
+    getRoomItems(playerCoords, False, itemData)
     firstTimeEnteringRoom = False
   
   ##########################
@@ -37,7 +38,7 @@ while True:
     print(getRoomName(playerCoords))
     print(getRoomDesc(playerCoords))
     print(printRoomExits(playerCoords))
-    getRoomItems(playerCoords, False)
+    getRoomItems(playerCoords, False, itemData)
   
   elif playerInput.lower() in inventory:
     print(playerInventory)
@@ -111,7 +112,8 @@ while True:
     loop = True
     while loop == True:
       if playerInput == str(playerInventory[currentItem].name.lower()):
-        print(playerInventory)
+        droppedItem = playerInventory.pop(currentItem)
+        print("dropped",droppedItem.name)
       else:
         currentItem += 1
       loop = False

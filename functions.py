@@ -47,29 +47,29 @@ def getRoomExits(playerCoords, desiredExitValue):
     return canMoveWest
   return False
 
-def getRoomItems(playerCoords, convertItems):
-  from items import itemData
+def getRoomItems(playerCoords, convertItems, itemData):
   import json
   with open("roomitemdata.json") as json_file:
     try:
       loadedjsondata = json.load(json_file)
+      print("\033[93mloaded file\033[0m")
     except:
       print('\033[93mDEBUG: Failed to load file "roomitemdata.json"\033[0m')
       return
     
   try:
-    roomItems = loadedjsondata[str(playerCoords)]
+    currentRoomItemList = loadedjsondata[str(playerCoords)]
   except KeyError:
     return
 
   if convertItems == True:
-    from items import itemData
     currentItem = 0
     export = []
-    while currentItem <= len(roomItems):
+    while currentItem <= len(currentRoomItemList):
       try:
-        export.append(itemData[roomItems[currentItem]])
+        export.append(itemData[currentRoomItemList[currentItem]])
       except IndexError:
+        print("\033[93mroom items loaded to list of objects in main.py to be available for grabbing\033[0m")
         return export
       currentItem += 1
       #CONVERTS THE LIST OF NAMES STORED IN THE ROOM TO A LIST OF OBJECTS AND RETURNS IT
@@ -78,9 +78,10 @@ def getRoomItems(playerCoords, convertItems):
   loop = True
   while loop == True:
     try:
-      globals()[f"item{currentItem}"] = itemData[str(roomItems[currentItem])]
+      globals()[f"item{currentItem}"] = itemData[str(currentRoomItemList[currentItem])]
     except IndexError:
       loop = False
+      print("\033[93m")
     except KeyError:
       globals()[f"item{currentItem}"] = "???"
     currentItem += 1
@@ -102,7 +103,6 @@ def getRoomItems(playerCoords, convertItems):
   totalListItems = len(roomItemsText)
   if totalListItems <= 0:
     return
-
 
   if totalListItems > 5:
     tempList = []
