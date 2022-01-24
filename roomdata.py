@@ -1,9 +1,8 @@
-#FORMAT: roomName, roomDesc, roomExits, roomMetaData
-
-#ROOM EXIT FORMAT IS:  NORTH SOUTH EAST WEST
+#FORMAT:    roomName, roomDesc, roomExits, roomMetaData
+#ROOMEXIT FORMAT:  NORTH SOUTH EAST WEST (1111)
 roomData = {
-  "(800, 5898)":["Void Pothole","Uh oh.","0000","default"],
-  "(0, 0)":["Spawn","You spawn here!","1000","tutorialRoom"],
+  "(?, ?)":["This is a room name","This is a room description.","1111","default"],
+  "(0, 0)":["\033[96mFlodded Passageway\033[0m","A pile of rubble blocks the exit to the \033[2mSOUTH.\033[0m The stone brick floor is cracked and shattered and the room is partially flooded. The only source of light is from a sewer grate above, and there is a passageway to the \033[92mNORTH.\033[0m","1200","tutorialRoom"],
   "(0, 1)":["placeholdername01","placeholderdesc01","1101","tutorialRoom"],
   "(0, 2)":["placeholdername02","placeholderdesc02","0101","tutorialRoom"],
   "(-1, 2)":["placeholdername-12","placeholderdesc-12","0010","tutorialRoom"],
