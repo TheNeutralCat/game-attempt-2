@@ -276,7 +276,7 @@ def loadProgress(slot, debugMode):
         print("\033[92mroomitemdata.json recovered, file is not corrupted.")
         return
     except:
-      from commands import errormsg1
+      from lists import errormsg1
       quit(errormsg1) #something has gone horribly, horribly wrong
 
   try:
@@ -313,7 +313,6 @@ def getSaveSlotData():
         loadedjsondata = json.load(json_file)
         loadedPlayerData = loadedjsondata["playerData"]
         #loads the list in format ["10:18AM, 2022-01-20", 666, 665, 400] and it takes the first list element (the date and time the file was saved) and it uses the function to return that as the file name to display
-
       if currentSlot == 1:
         getSaveSlotData.slot1 = [f"Slot 1 - {loadedPlayerData[0]}",True]
       elif currentSlot == 2:
@@ -426,7 +425,7 @@ def printColor(string, color):
 
 
 
-def getItem(playerInput, playerCoords, playerInventory, currentRoomItems, playerBag, playerMoney):
+def getItem(playerInput, playerCoords, playerInventory, currentRoomItems, playerBag, playerMoney, debugMode):
   import json
   
   addItemToInventory = True
@@ -450,30 +449,39 @@ def getItem(playerInput, playerCoords, playerInventory, currentRoomItems, player
       if playerInput == str(currentRoomItems[currentItem].name.lower()):
         #checks if the player's input matches the name of an object (in lowercase)
         pickedUpItem = currentRoomItems.pop(currentItem)
+        if debugMode == True: print("\033[93mDEBUG: popped specified item from currentRoomItem list\033[0m")
         break
         #picks up the player's requested object and removes it from the "currentRoomItems" list (in preperation for saving)
       currentItem += 1
     except IndexError:
+      if debugMode == True: print("\033[93mDEBUG: could not find item name in currentRoomItems list\033[0m")
       print("\033[31mYou don't see that here!\033[0m")
       return
 
   try:
     if pickedUpItem.isKeyItem == True:
+      if debugMode == True: print("\033[93mDEBUG: pickedUpItem is key item\033[0m")
+      
       if pickedUpItem.itemType == "backpack":
+        if debugMode == True: print("\033[93mDEBUG: pickedUpItem is backpack\033[0m")
+        
         if pickedUpItem.itemValue > playerBag.itemValue:
           carryingCapacityIncrease = int(pickedUpItem.itemValue) - int(playerBag.itemValue)
-          playerBag = pickedUpItem
+          
+          getItem.playerBag = pickedUpItem
+          if debugMode == True: print("\033[93mDEBUG: updated playerBag variable\033[0m")
+
           if pickedUpItem.reference_name == "holdingBag":
             print("\033[92mYour carrying capacity has increased by »’íÙ}Šñd²žp%æ‰\033[0m")
           else:
             print(f"\033[92mYour carrying capacity has increased by {carryingCapacityIncrease}!\033[0m")
-          getItem.playerBag = playerBag
-          getItem.functionSuccess = True
-          return
+  
         elif pickedUpItem.itemValue == playerBag.itemValue:
+          if debugMode == True: print("\033[93mDEBUG: the bag specified has the same number of item slots as player's current bag, this is not allowed\033[0m")
           print("\033[31mYou have this bag already!\033[0m")
           return
         else:
+          if debugMode == True: print("\033[93mDEBUG: the bag specified has less slots than player's bag, this is not allowed\033[0m")
           print("\033[31mThis bag is worse than your current bag!\033[0m")
           return
         addItemToInventory = False
@@ -560,7 +568,7 @@ def getMoney(playerInput, playerCoords, playerInventory, currentRoomItems, playe
         getMoney.playerMoney = playerMoney
         getMoney.currentRoomItems = [currentRoomItems,roomMoney]
       else:
-        from commands import errormsg1
+        from lists import errormsg1
         print(f"\033[93mDEBUG: {errormsg1}\033[0m")
         quit("\nhttps://xkcd.com/2200/")
         #this happens if the player's wallet balance becomes negative
@@ -577,13 +585,16 @@ def getMoney(playerInput, playerCoords, playerInventory, currentRoomItems, playe
       updatedDict = {str(playerCoords):[jsonData[str(playerCoords)][0],updatedRoomMoney]}
         
       try:
-        if debugMode == True: print("\033[93mDEBUG: opening roomitemdata.json\033[0m")
+        if debugMode == True: print("\033[93mDEBUG: updating roomitemdata.json\033[0m")
         with open("roomitemdata.json", "w") as json_file:
           updatedJsonData.update(updatedDict)
           json.dump(updatedJsonData, json_file)
           
           getMoney.functionSuccess = True
           print(f"\033[96mYou pick up ${playerInput} before anyone notices.\033[0m")
+        if debugMode == True: print("\033[93mDEBUG: updated roomitemdata.json\033[0m")
+        if getMoney.currentRoomItems[1] > 0:
+          print(f"\033[95m${getMoney.currentRoomItems[1]} remains in the room.\033[0m")
         return
       except:
         with open("roomitemdata.json", "w") as json_file:

@@ -30,10 +30,12 @@ class Item:
     self.isKeyItem = isKeyItem
 
 class Enemy:
-  def __init__(self, enemyName, referenceName, enemyType, armor, speed, damage, health):
+  def __init__(self, enemyName, referenceName, enemyType, prefix, color, armor, speed, damage, health):
     self.name = enemyName
     self.reference_name = referenceName
     self.enemyType = enemyType
+    self.prefix = prefix
+    self.color = color
     self.armor = armor
     self.speed = speed
     self.damage = damage
@@ -50,5 +52,8 @@ itemData = {
   
   "baseballBat":Weapon(1,"Baseball Bat","baseballBat","melee",5,1),
   "pinataBat":Weapon(1,"Piñata Bat","pinataBat","melee",5,1),
+}
 
+enemyData = {
+  "greenSlime":Enemy("Green Slime","greenSlime","slime","a","\033[92m",0,1,1,5)
 }

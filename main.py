@@ -1,16 +1,17 @@
 import time
 import random
 import json
-from items import *
-from commands import *
+from objects import *
+from lists import *
 from functions import *
 from roomdata import roomData
+from sequences import inFight
 
 gameVersion = "v0.1"
 debugMode = False
 
 with open("roomitemdata.json", "w") as json_file:
-  json.dump({"(0, 0)": [["wornPack","baseballBat","holdingBag"],100],"(0, 1)":[[],10],"(666, 666)": [["holdingBag"]]}, json_file)
+  json.dump({"(0, 0)": [["wornPack","baseballBat","largePack","holdingBag"],100],"(0, 1)":[[],10],"(666, 666)": [["holdingBag"]]}, json_file)
   #THE DEFAULT DROPPED ITEMS FOR ROOMS. IF YOU WANT TO ADD A ROOM WITH A KEY ITEM IN IT, YOU NEED TO CHANGE THIS DICTIONARY
 
 playerX = 0
@@ -19,9 +20,17 @@ playerMoney = 3
 playerHealth = 100
 playerInventory = []
 playerEquipped = {"head":"EMPTY","chest":"EMPTY","legs":"EMPTY","feet":"EMPTY"}
-playerBag = itemData["holdingBag"]
+playerBag = itemData["pockets"]
 
 firstTimeEnteringRoom = True
+
+
+
+
+print('\033[95mMESSAGE OF THE DAY\n\033[0mUse "cls" to clear the screen and reduce clutter\033[0m\n\n')
+
+
+
 
 while True:
   playerCoords = (playerX,playerY)
@@ -52,6 +61,10 @@ while True:
   if playerInput.lower() in clear:
     clearConsole()
     firstTimeEnteringRoom = True
+
+  
+  if playerInput.lower() == "fight":
+    inFight(playerCoords, playerInventory)
 
 
   elif playerInput.lower().startswith("debug") == True:
@@ -158,7 +171,7 @@ while True:
           currentRoomItems = getMoney.currentRoomItems
       else:
         if len(playerInventory) < bagCapacity:
-          getItem(playerInput, playerCoords, playerInventory, currentRoomItems, playerBag, playerMoney)
+          getItem(playerInput, playerCoords, playerInventory, currentRoomItems, playerBag, playerMoney, debugMode)
           
           if getItem.functionSuccess == True:
             playerInventory = getItem.playerInventory

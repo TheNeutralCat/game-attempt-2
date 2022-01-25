@@ -1,5 +1,12 @@
-def fightSequence(playerCoords, playerInventory):
+def inFight(playerCoords, playerInventory):
+  from objects import itemData, enemyData
+  
+  foe = enemyData["greenSlime"]
+  print(f"\033[31m{foe.prefix.upper()} {foe.color}[{foe.name}]\033[31m enters the room!\033[0m")
+
   while True:
-    playerAttackInput = input(">> ")
-    #???
-    #I have no idea how to go about coding this
+    
+    #############################
+    playerInput = input(">> ") ##
+    #############################
+    #      the sacred line      
