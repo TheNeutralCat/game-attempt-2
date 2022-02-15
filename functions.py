@@ -1,17 +1,8 @@
-def clearConsole():
-    from os import system, name
-    if name == 'nt':
-      _ = system('cls')
-    else:
-      _ = system('clear')
-    #this code is from https://www.geeksforgeeks.org/clear-screen-python/, I did not write it myself and so I do not claim to
-
-
+import time, sys
 
 def getRoomName(playerCoords, roomData):
   try:
-    roomName = roomData[str(playerCoords)]
-    return roomName[0]
+    return roomData[str(playerCoords)][0]
   except KeyError:
     return "\033[93mDEBUG: no room name exists for current room\033[0m"
 
@@ -20,52 +11,44 @@ def getRoomName(playerCoords, roomData):
 
 def getRoomDesc(playerCoords, roomData):
   try:
-    roomDesc = roomData[str(playerCoords)]
-    return roomDesc[1]
+    return roomData[str(playerCoords)][1]
   except KeyError:
     return "\033[93mDEBUG: no room description exists for current room\033[0m"
 
 
 
 
-def getRoomExits(playerCoords, desiredExitValue, roomData):
-  try:
-    roomExits = roomData[str(playerCoords)][2]
-  except KeyError:
-    roomExits = "1111"
-
+def getRoomExits(playerCoords, roomData):
   exitList = []
-  exitList[:0] = roomExits
-  #breaks down "1011" into "north = true, south = false" etc
+  try:
+    exitList[:0] = roomData[str(playerCoords)][2]
+    #breaks string "1111" into list ["1","1","1","1"]
+  except KeyError:
+    exitList = "1111"
+    #if no room exits are found, the player can move anywhere
+    
 
-  canMoveNorth = canMoveSouth = canMoveEast = canMoveWest = False
+  getRoomExits.north = False
+  getRoomExits.south = False
+  getRoomExits.east = False
+  getRoomExits.west = False
 
   if exitList[0] == "1":
-    canMoveNorth = True
+    getRoomExits.north = True
   if exitList[1] == "1":
-    canMoveSouth = True
+    getRoomExits.south = True
   if exitList[2] == "1":
-    canMoveEast = True
+    getRoomExits.east = True
   if exitList[3] == "1":
-    canMoveWest = True
-  
-  if desiredExitValue.lower() == "north":
-    return canMoveNorth
-  if desiredExitValue.lower() == "south":
-    return canMoveSouth
-  if desiredExitValue.lower() == "east":
-    return canMoveEast
-  if desiredExitValue.lower() == "west":
-    return canMoveWest
-  return False
+    getRoomExits.west = True
+  return
 
 
 
 
 def printRoomExits(playerCoords, roomData):
   try:
-    exits = roomData[str(playerCoords)]
-    exits = exits[2]
+    exits = roomData[str(playerCoords)][2]
   except:
     print("\033[93mDEBUG: no room exit data for current room\033[0m")
     exits = "1111"
@@ -75,6 +58,7 @@ def printRoomExits(playerCoords, roomData):
   #breaks down "1011" into "north = true, south = false" etc
 
   north = south = east = west = ""
+  #to avoid UnboundLocalError
 
   if exitList[0] == "1":
     north = "NORTH "
@@ -93,10 +77,12 @@ def printRoomExits(playerCoords, roomData):
 
 def getRoomItems(playerCoords, itemData):
   import json
-  with open("roomitemdata.json") as json_file:
+  with open("roomobjectdata.json") as json_file:
     try: loadedjsondata = json.load(json_file)
-    except: print('\033[93mDEBUG: Failed to load roomitemdata.json\033[0m'); return
-  
+    except: print('\033[31mFailed to load roomobjectdata.json.\033[0m'); return
+  getRoomItems.currentRoomItems = [[],0] #default value, will be changed
+
+  roomMoney = 0
   printRoomMoney = False
   #default, will be changed
 
@@ -105,7 +91,7 @@ def getRoomItems(playerCoords, itemData):
   
   try:
     roomMoney = currentRoomItemList[1]
-    roomMoneyText = f"${roomMoney},"
+    roomMoneyText = f"${placeValue(roomMoney)},"
     if int(roomMoney) > 0:
       printRoomMoney = True
     #if the room has more than 0 dollars, show it in the items section
@@ -113,39 +99,33 @@ def getRoomItems(playerCoords, itemData):
   currentRoomItemList = currentRoomItemList[0]
   #these lines take the input [["baseballBat","baseballBat"],10] and it clips off the money variable at the end (-> roomMoney = 10), while setting the original variable to the singular list, ["baseballBat","baseballBat"]
 
-  currentItem = 0
   export = []
   roomItemsText = []
-  while True:
+  for x in currentRoomItemList:
     try:
-      export.append(itemData[currentRoomItemList[currentItem]])
-      roomItemsText.append(itemData[currentRoomItemList[currentItem]].name)
-    except IndexError:
-      try: export = [export,roomMoney]
-      except UnboundLocalError: export = [export,0]
-      getRoomItems.currentRoomItems = export
-      break
+      export.append(itemData[x])
+      roomItemsText.append(itemData[x].name)
     except AttributeError:
       print("\033[31mA room object failed to load (no definition within items.py)\033[0m")
-    currentItem += 1
+  getRoomItems.currentRoomItems = [export,roomMoney]
   #this function creates 2 empty lists, one is filled with objects (export) to be exported to main.py to currentRoomItems, the other list is ued to form a list of names to be printed to display what items are present in the room
   
-  sepString = ", "
   if len(roomItemsText) <= 0:
     if printRoomMoney == False:
       return
     else: roomMoneyText = roomMoneyText[:-1]
     #if there are no items in a room other than the money, it removes the comma
     #VERY USEFUL
-
-  if len(roomItemsText) > 5:
-    roomItemsText = roomItemsText[0:5]
+  
+  sepString = ", "
+  if len(roomItemsText) > 4:
+    roomItemsText = roomItemsText[0:4]
     #cuts off all but first 5 items
     roomItemsText = sepString.join(roomItemsText)
     if printRoomMoney == True:
-      print(f"\033[95mItems: {roomMoneyText} {roomItemsText}...\033[0m")
+      print(f"\033[95mItems: {roomMoneyText} {roomItemsText}…\033[0m")
     else:
-      print(f"\033[95mItems: {roomItemsText}...\033[0m")
+      print(f"\033[95mItems: {roomItemsText}…\033[0m")
   else:
     roomItemsText = sepString.join(roomItemsText)
     if printRoomMoney == True:
@@ -182,27 +162,21 @@ def saveProgress(slot, playerX, playerY, playerMoney, playerInventory):
   try: saveTime = getTime('US/Pacific')
   except: saveTime = "\033[31mUnknown save time.\033[0m"
   
-  with open("roomitemdata.json") as json_file:
+  with open("roomobjectdata.json") as json_file:
     try:
-      roomitemdata = json.load(json_file)
+      roomobjectdata = json.load(json_file)
     except:
-      print('\033[93mDEBUG: Failed to load file "roomitemdata.json"\033[0m')
+      print('\033[93mDEBUG: Failed to load file "roomobjectdata.json"\033[0m')
       print(saveFailedText)
       return
 
-  playerInventorySaveable = []
-  currentItem = 0
-  while True:
-    try:
-      playerInventorySaveable.append(playerInventory[currentItem].reference_name)
-      currentItem += 1
-    except IndexError:
-      break
-
-  playerInventorySaveable = [playerInventorySaveable,playerMoney]
+  export = []
+  for x in playerInventory:
+    export.append(x.reference_name)
+  playerInventory = [export,playerMoney]
 
   saveData = [saveTime, playerX, playerY]
-  saveDict = {"playerData":saveData,"playerInventory":playerInventorySaveable,"roomItemData":roomitemdata}
+  saveDict = {"playerData":saveData,"playerInventory":playerInventory,"roomobjectdata":roomobjectdata}
 
   print("\033[92;2mSaving...\033[0m")
   try:
@@ -224,7 +198,6 @@ def saveProgress(slot, playerX, playerY, playerMoney, playerInventory):
 def loadProgress(slot, debugMode):
   import json
   loadProgress.loadSuccess = False
-  loadFailedText = "\033[31mLoad Failed.\033[0m"
   
   if isValidSlot(slot) == False:
     return
@@ -235,45 +208,43 @@ def loadProgress(slot, debugMode):
     with open(f"slot{slot}.json") as json_file:
       loadedjsondata = json.load(json_file)
   except:
-    print("\033[31mFatal open() error.\033[0m")
-    print(loadFailedText)
+    print("\033[31mFatal open() error.\nLoad failed.\033[0m")
     return
 
   try:
     loadedPlayerData = loadedjsondata["playerData"]
   except:
-    print("\033[31mFailed to load playerData.\033[0m")
-    print(loadFailedText)
+    print("\033[31mFailed to load playerData.\nLoad failed.\033[0m")
     return
   
   try:
     loadedInventoryData = loadedjsondata["playerInventory"]
   except:
-    print("\033[31mFailed to load playerInventory.\033[0m")
+    print("\033[31mFailed to load playerInventory.\nLoad failed.\033[0m")
     return
   
   try:
-    loadedRoomItemData = loadedjsondata["roomItemData"]
+    loadedroomobjectdata = loadedjsondata["roomobjectdata"]
   except:
-    print("\033[31mFailed to load roomItemData.")
-    print(loadFailedText)
+    print("\033[31mFailed to load roomobjectdata.\nLoad failed.\033[0m")
     return
 
   try:
-    with open("roomitemdata.json", 'r') as json_file:
+    with open("roomobjectdata.json", 'r') as json_file:
       jsonData = json.load(json_file)
-  except:
-    print("\033[31mFailed to load roomItemData. (is file missing?)\033[0m")
-    print("\033[2mCreating new rooitemdata.json with loaded data...\033[0m")
+  except: pass
+  #loads current roomobjectdata.json as a failsafe
   try:
-    with open("roomitemdata.json", 'w') as json_file:
-      json.dump(loadedRoomItemData, json_file)
+    with open("roomobjectdata.json", 'w') as json_file:
+      json.dump(loadedroomobjectdata, json_file)
+  #tries to overwrite roomobjectdata.json with loaded data
   except:
-    print("\033[31mCould not save to roomitemdata.json.")
+    print("\033[31mCould not update roomobjectdata.json.")
     try:
-      with open("roomitemdata.json", 'w') as json_file:
+      with open("roomobjectdata.json", 'w') as json_file:
         json.dump(jsonData, json_file)
-        print("\033[92mroomitemdata.json recovered, file is not corrupted.")
+        print("\033[92mroomobjectdata.json recovered, file should not be corrupted.")
+        #if the file cannot be updated for any reason, the function will try to fix the file by updating it with the copy stored in memory
         return
     except:
       from lists import errormsg1
@@ -304,24 +275,19 @@ def getSaveSlotData():
   getSaveSlotData.allEmpty = False
   #the second value (the boolean) is used to determine whether the slot is filled or not without adding any extra variables. this means that in order to retrieve the text from the variable you need to specify list element 0 (ex. print(variableName[0]))
 
-  currentSlot = 1
-  
-  while currentSlot <= 3:
-    slotName = f"slot{currentSlot}.json"
+  for x in range(1,3):
     try:
-      with open(slotName) as json_file:
+      with open(f"slot{x}.json") as json_file:
         loadedjsondata = json.load(json_file)
         loadedPlayerData = loadedjsondata["playerData"]
         #loads the list in format ["10:18AM, 2022-01-20", 666, 665, 400] and it takes the first list element (the date and time the file was saved) and it uses the function to return that as the file name to display
-      if currentSlot == 1:
+      if x == 1:
         getSaveSlotData.slot1 = [f"Slot 1 - {loadedPlayerData[0]}",True]
-      elif currentSlot == 2:
+      if x == 2:
         getSaveSlotData.slot2 = [f"Slot 2 - {loadedPlayerData[0]}",True]
-      elif currentSlot == 3:
+      if x == 3:
         getSaveSlotData.slot3 = [f"Slot 3 - {loadedPlayerData[0]}",True]
-    
     except: pass
-    currentSlot += 1
   
   if getSaveSlotData.slot1[1] == False and getSaveSlotData.slot2[1] == False and getSaveSlotData.slot3[1] == False:
     getSaveSlotData.allEmpty = True
@@ -333,11 +299,8 @@ def getSaveSlotData():
 def clearSlot(slot):
   if isValidSlot(slot) == True:
     print("\033[93;2mClearing slot...\033[0m")
-    try:
-      with open(f"slot{slot}.json", "w") as f:
-        print("\033[92mSlot cleared!\033[0m")
-    except:
-      print("\033[31mFailed to clear slot. (is file now corrupted??)")
+    with open(f"slot{slot}.json", "w") as f:
+      print("\033[92mSlot cleared!\033[0m")
   else:
     print("\033[31mInvalid slot!\033[0m")
   return
@@ -382,7 +345,7 @@ def getTime(timeZone):
     meridiem = "AM"
   
   if minute < 10:
-    minute = f"0{minute}"
+    minute = "0"+minute
 
   try:
     return f"{hour}:{minute}{meridiem} {today}"
@@ -425,14 +388,14 @@ def printColor(string, color):
 
 
 
-def getItem(playerInput, playerCoords, playerInventory, currentRoomItems, playerBag, playerMoney, debugMode):
+def getItem(playerInput, playerCoords, playerInventory, currentRoomItems, playerBag, playerMoney, itemData, debugMode):
   import json
   
   addItemToInventory = True
-  getItem.playerInventory = playerInventory
-  getItem.currentRoomItems = currentRoomItems
-  getItem.playerBag = playerBag
-  getItem.playerMoney = playerMoney
+  getItem.playerInventory = playerInventory #a list of objects
+  getItem.currentRoomItems = currentRoomItems #a list of objects[0] and an int value[1]
+  getItem.playerBag = playerBag #an object
+  getItem.playerMoney = playerMoney #int
   getItem.functionSuccess = False
   #if the function fails and nothing is updated, these lines mark the default state for the variables
 
@@ -465,10 +428,9 @@ def getItem(playerInput, playerCoords, playerInventory, currentRoomItems, player
       if pickedUpItem.itemType == "backpack":
         if debugMode == True: print("\033[93mDEBUG: pickedUpItem is backpack\033[0m")
         
-        if pickedUpItem.itemValue > playerBag.itemValue:
-          carryingCapacityIncrease = int(pickedUpItem.itemValue) - int(playerBag.itemValue)
-          
-          getItem.playerBag = pickedUpItem
+        if pickedUpItem.itemValue >= playerBag.itemValue:
+          carryingCapacityIncrease=int(pickedUpItem.itemValue)-int(playerBag.itemValue)
+          playerBag = pickedUpItem
           if debugMode == True: print("\033[93mDEBUG: updated playerBag variable\033[0m")
 
           if pickedUpItem.reference_name == "holdingBag":
@@ -476,10 +438,6 @@ def getItem(playerInput, playerCoords, playerInventory, currentRoomItems, player
           else:
             print(f"\033[92mYour carrying capacity has increased by {carryingCapacityIncrease}!\033[0m")
   
-        elif pickedUpItem.itemValue == playerBag.itemValue:
-          if debugMode == True: print("\033[93mDEBUG: the bag specified has the same number of item slots as player's current bag, this is not allowed\033[0m")
-          print("\033[31mYou have this bag already!\033[0m")
-          return
         else:
           if debugMode == True: print("\033[93mDEBUG: the bag specified has less slots than player's bag, this is not allowed\033[0m")
           print("\033[31mThis bag is worse than your current bag!\033[0m")
@@ -491,41 +449,39 @@ def getItem(playerInput, playerCoords, playerInventory, currentRoomItems, player
   except AttributeError: pass
   #if it ain't a key item, it moves on
 
-  print(f"\033[96mPicked up {pickedUpItem.name}!\033[0m")
+  currentRoomReferences = []
+  for x in currentRoomItems:
+    currentRoomReferences.append(x.reference_name)
+  #this function breaks down the list of currentRoomItems into a list of reference names ["baseballBat","baseballBat","baseballBat"]
 
-  currentItem = 0
-  updatedRoomItems = []
-  while True:
-    try:
-      updatedRoomItems.append(currentRoomItems[currentItem].reference_name)
-      currentItem += 1
-    except IndexError:
-      break
+  updatedDict = {str(playerCoords):[currentRoomReferences,roomMoney]}
   
-  updatedDict = {str(playerCoords):[updatedRoomItems,roomMoney]}
-  
-  with open("roomitemdata.json") as json_file:
+  with open("roomobjectdata.json") as json_file:
     jsonData = json.load(json_file)
     updatedJsonData = jsonData
   try:
-    with open("roomitemdata.json", "w") as json_file:
+    with open("roomobjectdata.json", "w") as json_file:
       updatedJsonData.update(updatedDict)
       json.dump(updatedJsonData, json_file)
-      #tries to update the roomitemdata.json file as a dictionary
+      #tries to update the roomobjectdata.json file as a dictionary
         
     if addItemToInventory == True:
+      print(f"\033[96mPicked up {pickedUpItem.name}!\033[0m")
       playerInventory.append(pickedUpItem)
       #this boolean exists as to not add key items to your regular inventory
+    else:
+      if debugMode == True: print("\033[93mDEBUG: is key item, item will not being added to playerInventory\033[0m")
         
     getItem.playerInventory = playerInventory
-    getItem.currentRoomItems = currentRoomItems
+    getItem.currentRoomItems = [currentRoomItems,roomMoney]
     getItem.playerBag = playerBag
+    getItem.functionSuccess = True
     return
     #updates variables in main.py through using this function
   except:
-    with open("roomitemdata.json", "w") as json_file:
+    with open("roomobjectdata.json", "w") as json_file:
       json.dump(jsonData, json_file)
-    print("\033[31mDEBUG: Fatal error updating roomitemdata.json! Changes have not been applied to prevent file corruption.\033[0m")
+    print("\033[31mDEBUG: Fatal error updating roomobjectdata.json! Changes have not been applied to prevent file corruption.\033[0m")
 
 
 
@@ -546,15 +502,11 @@ def getMoney(playerInput, playerCoords, playerInventory, currentRoomItems, playe
 
   if roomMoney > 0:
     try:
-      if playerInput[5:] == "":
-        playerInput = 9999999999
-      else:
-        playerInput = int(playerInput[5:])
-        #if the player just types in "get $" and nothing else, the function will set the input to a very large number in order to pick up all the money automatically
-      
-      if playerInput > roomMoney:
+      if playerInput[5:] == "" or abs(int(playerInput[5:])) > roomMoney:
         playerInput = roomMoney
-        #if player requests more money than there is in the room, it picks up all the money there is availiable
+      else:
+        playerInput = abs(int(playerInput[5:]))
+        #if the player enters nothing or a number that is too large, this function will get all the availible money there is in the current room
       
       if debugMode == True: print(f"\033[93mDEBUG: room money before: {roomMoney}\033[0m")
       roomMoney -= playerInput
@@ -564,42 +516,38 @@ def getMoney(playerInput, playerCoords, playerInventory, currentRoomItems, playe
       if debugMode == True: print(f"\033[93mDEBUG: player money after: {playerMoney}\033[0m")
       #the calculations for how much money is added/removed
         
-      if playerMoney >= 0:
-        getMoney.playerMoney = playerMoney
-        getMoney.currentRoomItems = [currentRoomItems,roomMoney]
-      else:
+      if playerMoney < 0:
         from lists import errormsg1
         print(f"\033[93mDEBUG: {errormsg1}\033[0m")
         quit("\nhttps://xkcd.com/2200/")
-        #this happens if the player's wallet balance becomes negative
+        #this happens if the player has negative money
 
-      with open("roomitemdata.json") as json_file:
+      with open("roomobjectdata.json") as json_file:
         jsonData = json.load(json_file)
         updatedJsonData = jsonData
         
-      try:
-        roomMoney = int(jsonData[str(playerCoords)][1])
-      except IndexError: pass
-        #tries to retrieve money value from roomitemdata, if it can't find anything it will assume it is 0
-      updatedRoomMoney = roomMoney - playerInput
-      updatedDict = {str(playerCoords):[jsonData[str(playerCoords)][0],updatedRoomMoney]}
+      try: updatedDict = {str(playerCoords):[jsonData[str(playerCoords)][0],roomMoney]}
+      except KeyError: updatedDict = {str(playerCoords):[[],roomMoney]}
         
       try:
-        if debugMode == True: print("\033[93mDEBUG: updating roomitemdata.json\033[0m")
-        with open("roomitemdata.json", "w") as json_file:
+        if debugMode == True: print("\033[93mDEBUG: updating roomobjectdata.json\033[0m")
+        with open("roomobjectdata.json", "w") as json_file:
           updatedJsonData.update(updatedDict)
           json.dump(updatedJsonData, json_file)
           
+          getMoney.playerMoney = playerMoney
+          getMoney.currentRoomItems = [currentRoomItems,roomMoney]
           getMoney.functionSuccess = True
           print(f"\033[96mYou pick up ${playerInput} before anyone notices.\033[0m")
-        if debugMode == True: print("\033[93mDEBUG: updated roomitemdata.json\033[0m")
+        
+        if debugMode == True: print("\033[93mDEBUG: updated roomobjectdata.json\033[0m")
         if getMoney.currentRoomItems[1] > 0:
           print(f"\033[95m${getMoney.currentRoomItems[1]} remains in the room.\033[0m")
         return
       except:
-        with open("roomitemdata.json", "w") as json_file:
+        with open("roomobjectdata.json", "w") as json_file:
           json.dump(jsonData, json_file)
-          print("\033[31mFatal error updating roomitemdata.json! Changes have not been applied to prevent file corruption. (file most likley would have been overwritten with garbage)\033[0m")
+          print("\033[31mFatal error updating roomobjectdata.json! Changes have not been applied to prevent file corruption. (file most likley would have been overwritten with garbage)\033[0m")
         return
 
     except ValueError:
@@ -607,7 +555,7 @@ def getMoney(playerInput, playerCoords, playerInventory, currentRoomItems, playe
       return
   
   else:
-    print("\033[31mHa ha, very funny.\033[0m")
+    print("\033[31mYou don't see that here!\033[0m")
     return
 
 
@@ -615,67 +563,403 @@ def getMoney(playerInput, playerCoords, playerInventory, currentRoomItems, playe
 
 
 
-def dropItem(playerInput, playerCoords, playerInventory, itemData, currentRoomItems, playerMoney):
+def dropItem(playerInput, playerCoords, playerInventory, itemData, currentRoomItems, playerMoney, debugMode):
   dropItem.playerInventory = playerInventory
   dropItem.currentRoomItems = currentRoomItems
   dropItem.playerMoney = playerMoney
   dropItem.functionSuccess = False #will be updated later
   
+  try: roomMoney = currentRoomItems[1]
+  except IndexError: roomMoney = 0
+  currentRoomItems = currentRoomItems[0]
+
   currentItem = 0
-  appendLoop = False
   while True:
     try:
-      if playerInput[5:] == str(playerInventory[currentItem].name.lower()):
+      if playerInput[5:] == playerInventory[currentItem].name.lower():
         droppedItem = playerInventory.pop(currentItem)
-        print(f"\033[96mDropped {droppedItem.name}!\033[0m")
+        if debugMode == True: print("\033[93mDEBUG: removed item from player's inventory\033[0m")
         #looks to see if player's inventory contains item to drop
-        appendLoop = True
         break
       else:
         currentItem += 1
     except IndexError:
-      print(f"\033[31mYou don't have {playerInput[5:]}!\033[0m")
+      from lists import apst
+      print(f'\033[31mYou don{apst}t have "{playerInput[5:]}"!\033[0m')
       return
   
-  if appendLoop == True:
-    try:
-      currentRoomItems.append(itemData[droppedItem.reference_name])
-    except AttributeError:
-      currentRoomItems = []
-      currentRoomItems.append(itemData[droppedItem.reference_name])
-    #adds the dropped item (in format "baseballBat") to the "currentRoomItems" list as an object
-    #the "except" function is used to turn a room with no item list into a list
-  currentItem = 0
   convertedRoomItems = []
+  for x in currentRoomItems:
+    convertedRoomItems.append(x.reference_name)
+    #converts the entire "currentRoomItems" list into a list of reference_names (baseballBat, baseballGlove, etc.)
   
-  with open("roomitemdata.json") as json_file:
+  if debugMode == True: print(f"\033[93mDEBUG: convertedRoomItems: {convertedRoomItems}\033[0m")
+
+  try: convertedRoomItems.append(droppedItem.reference_name)
+  except:
+    dropItem.functionSuccess = False
+    print("\033[31mError, cannot add dropped item to convertedRoomItemsList. Item cannot be saved to roomobjectdata.json\033[0m")
+    playerInventory.append(droppedItem)
+    dropItem.playerInventory = playerInventory
+    return
+  #adds the dropped item to the convertedRoomItem list (in preperation to save to roomobjectdata.json) if this line doesn't work, nothing in this function works
+  
+  convertedRoomItemsDict = {str(playerCoords):[convertedRoomItems,roomMoney]}
+  #converts the "convertedRoomItems" list into a dictionary to be merged into roomobjectdata.json
+  
+  with open("roomobjectdata.json") as json_file:
     import json
     jsondata = json.load(json_file)
     updatedJsondata = jsondata
-  
-  roomMoney = int(jsondata[str(playerCoords)][1])
-
-  while True:
-    try:
-      convertedRoomItems.append(currentRoomItems[currentItem].reference_name)
-        #converts the entire "currentRoomItems" list into a list of reference_names (baseballBat, baseballGlove, etc.)
-    except IndexError:
-      break
-    currentItem += 1
-  convertedRoomItems = {str(playerCoords):[[convertedRoomItems],roomMoney]}
-  #converts the "convertedRoomItems" list into a dictionary to be merged into roomitemdata.json
   try:
-    with open("roomitemdata.json", "w") as json_file:
-      updatedJsondata.update(convertedRoomItems)
+    with open("roomobjectdata.json", "w") as json_file:
+      updatedJsondata.update(convertedRoomItemsDict)
+      if debugMode == True: print(f"\033[93mDEBUG: updatedJsondata: {updatedJsondata}\033[0m")
       json.dump(updatedJsondata, json_file)
-      #loads roomitemdata.json, updates it with the new dictionary with the new item
+      #loads roomobjectdata.json, updates it with the new dictionary with the new item
   except:
-    with open("roomitemdata.json", "w") as json_file:
+    with open("roomobjectdata.json", "w") as json_file:
       json.dump(jsondata, json_file)
-      print("\033[31mDEBUG: Fatal error updating roomitemdata.json! Changes have not been applied to prevent file corruption.\033[0m")
+      print("\033[31mDEBUG: Fatal error updating roomobjectdata.json! Changes have not been applied to prevent file corruption.\033[0m")
       playerInventory.append(droppedItem)
   
   dropItem.playerInventory = playerInventory
-  dropItem.currentRoomItems = currentRoomItems
+  dropItem.currentRoomItems = [currentRoomItems,roomMoney] #the old currentRoomItems list had its money value chopped off, so use convertedRoomItems instead
   dropItem.functionSuccess = True
   #updates these variables in main.py
+
+  print(f"\033[96mDropped {droppedItem.name}!\033[0m")
+
+
+
+
+def dropMoney(playerInput, playerCoords, playerInventory, currentRoomItems, playerMoney, debugMode):
+  import json
+
+  dropMoney.playerMoney = playerMoney
+  dropMoney.currentRoomItems = currentRoomItems
+  dropMoney.functionSuccess = False
+
+  if debugMode == True: print("\033[93mDEBUG: dropMoney() called\033[0m")
+
+  try: roomMoney = currentRoomItems[1] #stores money value in a variable
+  except IndexError: roomMoney = 0 #if no money value is specified, money is set to 0
+  currentRoomItems = currentRoomItems[0] #removes money value from the list
+
+  if playerMoney > 0:
+    try:
+      if playerInput[6:] == "" or abs(int(playerInput[6:])) > playerMoney:
+        playerInput = playerMoney
+      else:
+        playerInput = abs(int(playerInput[6:]))
+        #if the player types in nothing or a number that is too large it will default to dropping all the money the player has- no more, no less
+
+      if debugMode == True: print(f"\033[93mDEBUG: room money before: {roomMoney}\033[0m")
+      playerMoney -= playerInput
+      if debugMode == True: print(f"\033[93mDEBUG: room money after: {roomMoney}\033[0m")
+      if debugMode == True: print(f"\033[93mDEBUG: player money before: {playerMoney}\033[0m")
+      roomMoney += playerInput
+      if debugMode == True: print(f"\033[93mDEBUG: player money after: {playerMoney}\033[0m")
+      #the calculations for how much money is added/removed
+        
+      if playerMoney >= 0:
+        pass
+      else:
+        from lists import errormsg1
+        print(f"\033[93mDEBUG: {errormsg1}\033[0m")
+        quit("\nhttps://xkcd.com/2200/")
+        #this happens if the player's wallet balance becomes negative
+
+      with open("roomobjectdata.json") as json_file:
+        jsonData = json.load(json_file)
+        updatedJsonData = jsonData
+      
+      try: updatedDict = {str(playerCoords):[jsonData[str(playerCoords)][0],roomMoney]}
+      except KeyError: updatedDict = {str(playerCoords):[[],roomMoney]}
+        
+      try:
+        if debugMode == True: print("\033[93mDEBUG: updating roomobjectdata.json\033[0m")
+        with open("roomobjectdata.json", "w") as json_file:
+          updatedJsonData.update(updatedDict)
+          json.dump(updatedJsonData, json_file)
+          
+          dropMoney.functionSuccess = True
+          dropMoney.playerMoney = playerMoney
+          dropMoney.roomMoney = roomMoney
+          dropMoney.currentRoomItems = [currentRoomItems,roomMoney]
+          print(f"\033[96mYou leave ${playerInput} on the ground. Good luck paying rent this month!\033[0m")
+        
+        if debugMode == True: print("\033[93mDEBUG: updated roomobjectdata.json\033[0m")
+        if dropMoney.currentRoomItems[1] > 0:
+          print(f"\033[95m${dropMoney.currentRoomItems[1]} lies in the center of the room.\033[0m")
+        return
+      except ValueError:
+        with open("roomobjectdata.json", "w") as json_file:
+          json.dump(jsonData, json_file)
+          print("\033[31mFatal error updating roomobjectdata.json! Changes have not been applied to prevent file corruption. (file most likley would have been overwritten with garbage)\033[0m")
+        return
+
+    except ValueError:
+      print("\033[31mInvalid number!\033[0m")
+      return
+  
+  else:
+    print("\033[31mBro you literally have no money to drop fr you actually broke rn\033[0m")
+    return
+
+
+
+
+def properNoun(string):
+  if string == "": return "" #no need to continue
+  string = string.split(" ")
+  
+  newString = []
+  for x in string:
+    if len(x) > 2:
+      newString.append(x[0:1].upper()+x[1:])
+    else:
+      newString.append(x)
+  string = ""
+  for x in newString:
+    string = string + x + " "
+  
+  return string[:-1]
+
+
+
+
+def xpToLevelUp(level):
+  xpToLevelUp = level ** 2.5 + 100 + 5 * level - 6
+  return int(round(xpToLevelUp,0)) #round to nearest integer
+
+def addPlayerXp(player, amount):
+  player.xp += amount
+  while player.xp > xpToLevelUp(player.level):
+    player.xp -= xpToLevelUp(player.level)
+    player.level += 1
+  return player
+
+
+
+
+def placeValue(number):
+  import math
+  try: number = str(number)
+  except: return number
+  if len(number) <= 3: return number
+  commas = math.floor(len(number)/3)
+
+  output = []
+  for x in range(commas):
+    x = number[-3:] #gets last 3 chars of the string
+    number = number[:-3] #trims them off
+    output.insert(0, x) #stores them in list at first position
+  
+  output.insert(0, number) #adds the last non-divisible-by-3 part onto the front
+  
+  export = ""
+  for x in output:
+    export += x + ","
+  
+  if export[0:1] == ",": export = export[1:]
+  #fixes a bug where it outputs like ",208,975" instead of "208,975"
+
+  return export[:-1]
+
+
+
+
+def fancyPrint(text, delay=0.04):
+  for x in text:
+    sys.stdout.write(x)
+    sys.stdout.flush()
+    time.sleep(delay)
+
+
+
+
+def statusBar(persentage=100, size=30, color="\033[0m", bg="\033[2m", char="█"):
+  bar = ""
+  for x in range(size):
+    bar += char
+  ratio = 100/size
+  persentage = int(persentage/ratio) #determines the number of green boxes to display
+  if persentage < 0: persentage = 0 #if the boxes to print are less than 0, print no boxes instead of a negative
+  return f"{color}{bar[0:persentage]}{bg}{bar[persentage:size]}\033[0m"
+
+
+
+class Cursor:
+  def show(flush=True):
+    sys.stdout.write("\033[?25h")
+    if flush == True:
+      sys.stdout.flush()
+  
+  def hide(flush=True):
+    sys.stdout.write("\033[?25l")
+    if flush == True:
+      sys.stdout.flush()
+  
+  def moveTo(line=0,column=0,flush=False):
+    sys.stdout.write(f"\033[{line};{column}H")
+    if flush == True:
+      sys.stdout.flush()
+
+
+  def up(x=1,r=False,flush=False):
+    x = abs(x)
+    char = ""
+    if r == True: char = "\r"
+    print(f"\033[{x}A",end=char)
+    if flush == True:
+      sys.stdout.flush()
+  
+  def down(x=1,r=False,flush=False):
+    x = abs(x)
+    char = ""
+    if r == True: char = "\r"
+    print(f"\033[{x}B",end=char)
+    if flush == True:
+      sys.stdout.flush()
+  
+  def right(x=1,r=False,flush=False):
+    x = abs(x)
+    char = ""
+    if r == True: char = "\r"
+    print(f"\033[{x}C",end=char)
+    if flush == True:
+      sys.stdout.flush()
+  
+  def left(x=1,r=False,flush=False):
+    x = abs(x)
+    char = ""
+    if r == True: char = "\r"
+    print(f"\033[{x}D",end=char)
+    if flush == True:
+      sys.stdout.flush()
+
+
+
+class ClearScreen:
+  def toEnd(flush=False):
+    sys.stdout.write("\033[0J")
+    #erases from cursor to end of screen
+    if flush == True:
+      sys.stdout.flush()
+  
+  def toStart(flush=False):
+    sys.stdout.write("\033[1J")
+    #erases from cursor to start of screen
+    if flush == True:
+      sys.stdout.flush()
+  
+  def screen(flush=False):
+    sys.stdout.write("\033[2J")
+    #erases until end of screen
+    if flush == True:
+      sys.stdout.flush()
+  
+  def saved(flush=False):
+    sys.stdout.write("\033[3J")
+    #erases "saved lines" (I don't know what this does)
+    if flush == True:
+      sys.stdout.flush()
+
+
+
+class ClearLine:
+  def toEnd(flush=False):
+    sys.stdout.write("\033[0K")
+    #erases from cursor to end of line
+    if flush == True:
+      sys.stdout.flush()
+  
+  def toStart(flush=False):
+    sys.stdout.write("\033[1K")
+    #erases from cursor to start of line
+    if flush == True:
+      sys.stdout.flush()
+  
+  def line(flush=False):
+    sys.stdout.write("\033[2K")
+    #erases entire line
+    if flush == True:
+      sys.stdout.flush()
+
+
+
+def space(int):
+  export = " "
+  for x in range(1,int):
+    export += " "
+  return export
+
+
+
+def beep(volume):
+  for x in range(1,volume+1):
+    sys.stdout.write("\a")
+  sys.stdout.flush()
+
+
+
+def percentageToColor(percentage, reverse=False):
+  try: percentage = int(percentage)
+  except TypeError: return
+  
+  if reverse == True:
+    if percentage >= 66:
+      return "\033[31m" #red
+    if percentage >= 33:
+      return "\033[38;2;255;255m" #yellow
+    if percentage < 33:
+      return "\033[92m" #green
+  
+  else:
+    if percentage >= 66:
+      return "\033[92m" #green
+    if percentage >= 33:
+      return "\033[38;2;255;255m" #yellow
+    if percentage < 33:
+      return "\033[31m" #red
+
+
+
+def rgb(r=255,g=255,b=255,esc="\033",bg=False):
+  if bg == True:
+    return f"{esc}[48;2;{r};{g};{b}m"
+  else:
+    return f"{esc}[38;2;{r};{g};{b}m"
+
+
+def printFormattedLines(stringList, lineLength, flush=False, sameLine=False):
+  margin = space(lineLength)
+  #this variable exists so it doesn't call the same function hundreds of times
+  
+  if sameLine == True:
+    import math
+    lineCount = math.ceil(len(stringList)/lineLength) #rounds up
+  
+    for x in range(0,lineCount):
+      if stringList[0][0+lineLength*x:lineLength+lineLength*x][0] == " ":
+        sys.stdout.write(f"| {stringList[0][1+lineLength*x:lineLength+lineLength*x]} {margin[0:-len(stringList[0][0+lineLength*x:lineLength+lineLength*x])]} |\n")
+        #removes a space if it is the first character of a line
+      else:
+        sys.stdout.write(f"| {stringList[0][0+lineLength*x:lineLength+lineLength*x]}{margin[0:-len(stringList[0][0+lineLength*x:lineLength+lineLength*x])]} |\n")
+        #figures out how many lines of the description there are to print
+    return
+
+  for string in stringList:
+    sys.stdout.write(f"| {string[0:lineLength]}{margin[0:-len(removeAnsi(string)[0:lineLength])]} |\n")
+
+  if flush == True:
+    sys.stdout.flush()
+  return
+
+
+def removeAnsi(string, subst=""):
+  import re
+  return re.sub(r'(\x9B|\x1B\[)[0-?]*[ -\/]*[@-~]', subst, string, 0)
+  #this code is from https://www.tutorialspoint.com/How-can-I-remove-the-ANSI-escape-sequences-from-a-string-in-python
+  #I tried to learn regular expressions myself but escape sequences are so broken it keeps removing the wrong parts of the string, I give up

@@ -8,7 +8,6 @@ search = {"search","src"} #find enemies, items, and secrets
 helpList = {"help","h","/help","/h","?help","?h","!h","!help"}
 attack = {"attack","a","fight"}
 mapList = {"map","m"}
-clear = {"cls"}
 
 slot1List = {"slot 1","1","slot1"}
 slot2List = {"slot 2","2","slot2"}
@@ -25,14 +24,17 @@ apst = "'"
 helpText = [
   '\033[95m--------------------- LIST OF COMMANDS -----------------------\033[0m',
   f'\033[93m"look"\033[0m (alias \033[93m"l"\033[0m) Get information about the room you{apst}re in',
-  f'\033[93m"map"\033[0m (no alias) Make sure you{apst}re going the right way',
+  f'\033[93m"map"\033[0m (no alias) Gives you your coordinates (x,y)',
+  '\033[93m"get"\033[0m & \033[93m"drop"\033[0m (no aliases) Pick up and drop items in rooms',
+  '\033[93m"cls"\033[0m (no alias) Clears the screen, reduces clutter',
+  '\033[93m"inventory"\033[0m (alias \033[93m"i"\033[0m, \033[93m"inv"\033[0m) Check what items you have',
   '',
-  '\033[92m"save"\033[0m, \033[93m"load"\033[0m, \033[31m"clear"\033[0m (no aliases) Make sure to save often!',
+  '\033[92m"save"\033[0m, \033[93m"load"\033[0m, \033[31m"clear"\033[0m (no aliases) Track your progress',
   #'',
   '',
   '\033[92mMovement\033[0m',
-  'To move, type a direction! (\033[93m"north"\033[0m, \033[93m"south"\033[0m, \033[93m"east"\033[0m, \033[93m"west"\033[0m)',
-  '(alieses are \033[93m"n"\033[0m, \033[93m"s"\033[0m, \033[93m"e"\033[0m, \033[93m"w"\033[0m)',
+  'To move, type a direction! (\033[92m"north"\033[0m, \033[92m"south"\033[0m, \033[92m"east"\033[0m, \033[92m"west"\033[0m)',
+  'Aliases are (\033[92m"n"\033[0m, \033[92m"s"\033[0m, \033[92m"e"\033[0m, \033[92m"w"\033[0m)',
   #'',
   '\033[95m-------------------------------------------------------------\033[0m',
   #'',
@@ -44,3 +46,5 @@ helpText = [
 errormsg1 = "If you're seeing this, the code is in what I thought was an unreachable state.\n\nI could give you advice for what do do, but honestly, why should you trust me? I clearly screwed this up. I'm writing a message that should never appear, yet I know it will probably appear someday.\n\nOn a deep level, I know I'm not up to this task. I'm so sorry."
 errormsg2 = "ERROR: We've reached an unreachable state. Anything is possible. The limits were in our heads all along. Follow your dreams."
 #https://xkcd.com/2200/
+
+lorem = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aenean felis augue, pretium quis elit quis, finibus posuere neque. Orci varius natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Suspendisse vehicula lacus quis ipsum pulvinar, efficitur ultricies velit malesuada. Proin cursus erat eget libero consectetur blandit. Proin cursus felis sit amet leo pretium, vitae tempus est lacinia. In vel tortor viverra, venenatis enim in, lobortis felis. Maecenas ultrices sodales efficitur. Fusce lobortis, sem in pretium pretium, magna neque sollicitudin sem, sit amet lacinia turpis nunc vel lorem. Integer posuere velit a ligula placerat consequat. Aliquam porttitor pulvinar mauris, sed laoreet lorem ultricies eget. Cras viverra tempus augue, ut euismod nisl. Vivamus quis semper est, eget facilisis leo. Nunc id mi imperdiet, tempor est a, aliquam diam. Ut justo massa, feugiat nec ligula sit amet, laoreet pellentesque arcu. Nulla posuere, erat in dapibus semper, arcu massa vulputate nisi, non varius dolor erat et orci. Sed ullamcorper pulvinar lacus, eu malesuada nunc. Praesent ac velit ante. Aliquam luctus sollicitudin justo vel blandit. Nullam nisi purus, venenatis quis elit eget, ultrices egestas est. Aliquam porta leo sed ligula aliquam euismod. Integer posuere nibh in erat eleifend, non consectetur nunc auctor. Praesent fermentum ex vel erat egestas ullamcorper. Cras lobortis mollis odio, eu pharetra nunc auctor vitae."

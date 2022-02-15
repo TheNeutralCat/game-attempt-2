@@ -1,13 +1,13 @@
 [tool.poetry]
-name = "repl_python3_game-attempt-2"
+name = "game-attempt-2"
 version = "0.1.0"
 description = ""
-authors = ["Your Name <you@example.com>"]
+authors = ["CollinRosbrugh <<>>"]
 
 [tool.poetry.dependencies]
 python = "^3.8"
+getkey = "^0.6.5"
 pytz = "^2021.3"
-items = "^0.6.5"
 
 [tool.poetry.dev-dependencies]
 

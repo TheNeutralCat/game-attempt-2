@@ -1,39 +1,37 @@
-import time
-import random
-import json
+import time, random, json, sys
 from objects import *
 from lists import *
 from functions import *
 from roomdata import roomData
-from sequences import inFight
+from sequences import introSequence, inFight
 
-gameVersion = "v0.1"
+Cursor.show()
+
+gameName = "game-attempt-2.py"
+gameVersion = "0.1"
 debugMode = False
+doIntroSequence = False
 
-with open("roomitemdata.json", "w") as json_file:
-  json.dump({"(0, 0)": [["wornPack","baseballBat","largePack","holdingBag"],100],"(0, 1)":[[],10],"(666, 666)": [["holdingBag"]]}, json_file)
+with open("roomobjectdata.json", "w") as json_file:
+  json.dump({"(0, 0)": [["wornPack"]],"(0, 1)":[["rustyPipe"]],"(666, 666)": [["holdingBag"]]}, json_file)
   #THE DEFAULT DROPPED ITEMS FOR ROOMS. IF YOU WANT TO ADD A ROOM WITH A KEY ITEM IN IT, YOU NEED TO CHANGE THIS DICTIONARY
 
 playerX = 0
 playerY = 0
-playerMoney = 3
-playerHealth = 100
 playerInventory = []
-playerEquipped = {"head":"EMPTY","chest":"EMPTY","legs":"EMPTY","feet":"EMPTY"}
-playerBag = itemData["pockets"]
+playerName = "Player" #default (if one is not set from previous save file or introSequence)
+
+if doIntroSequence == True:
+  introSequence(gameVersion, debugMode, gameName)
+  playerName = introSequence.playerName
+#health maxhealth money level xp color
+player = Player(playerName, 25, 0, 1, 0, rgb(random.randint(0,255),random.randint(0,255),random.randint(0,255)), itemData["empty"], itemData["empty"], itemData["empty"], itemData["empty"], itemData["pockets"])
 
 firstTimeEnteringRoom = True
 
-
-
-
-print('\033[95mMESSAGE OF THE DAY\n\033[0mUse "cls" to clear the screen and reduce clutter\033[0m\n\n')
-
-
-
-
 while True:
   playerCoords = (playerX,playerY)
+  getRoomExits(playerCoords, roomData)
 
   if firstTimeEnteringRoom == True:
     print(getRoomName(playerCoords, roomData))
@@ -42,6 +40,7 @@ while True:
     getRoomItems(playerCoords, itemData)
     currentRoomItems = getRoomItems.currentRoomItems
     firstTimeEnteringRoom = False
+
 
 
   #############################
@@ -58,29 +57,55 @@ while True:
     getRoomItems(playerCoords, itemData)
 
 
-  if playerInput.lower() in clear:
+  elif playerInput.lower() == "cls":
     clearConsole()
     firstTimeEnteringRoom = True
 
+
   
-  if playerInput.lower() == "fight":
-    inFight(playerCoords, playerInventory)
+  elif playerInput.lower() == "rgb":
+    currentItem = 0
+    while True:
+      Cursor.hide()
+      print(f"\033[2K\r\033[38;2;{255-currentItem};{currentItem};{255-currentItem}m16 million colors! [{currentItem}]\033[0m",end="")
+      time.sleep(0.01)
+      if currentItem == 255: forwards = False
+      if currentItem == 0: forwards = True
+      if forwards == True: currentItem += 1
+      else: currentItem -= 1
+    Cursor.show()
+  
+
+
+  elif playerInput.lower().startswith("beep ") == True:
+    try: playerInput = int(playerInput[5:])
+    except ValueError: pass
+    time.sleep(0.5)
+    if int(playerInput) > 1000:
+      print("\033[31mhttps://www.cdc.gov/nceh/hearing_loss/how_does_loud_noise_cause_hearing_loss.html\033[0m")
+    elif int(playerInput) > 100:
+      print("\033[31mToo loud!\033[0m")
+    elif int(playerInput) > 0:
+      beep(playerInput)
+
+  
+  elif playerInput.lower().startswith("xp") == True:
+    try: playerInput = int(playerInput[3:])
+    except ValueError: print("\033[31mInvalid number!\033[0m")
+
+    player = addPlayerXp(player, playerInput)
+    print(f"\033[92mGiven player {placeValue(playerInput)} xp points!\033[0m")
+    
+
+  
+  elif playerInput.lower() == "fight":
+    inFight(playerCoords, playerInventory, player, enemyData["greenSlime"])
+    player = inFight.player
+    firstTimeEnteringRoom = True
 
 
   elif playerInput.lower().startswith("debug") == True:
-    if playerInput[6:].lower() == "on" or playerInput[6:].lower() == "enable":
-      if debugMode == True:
-        print("\033[31mDebug is already enabled!\033[0m")
-      else:
-        print("\033[93mDebug mode: \033[92mon \033[2m(this will print a lot of text when calling functions)\033[0m")
-        debugMode = True
-    elif playerInput[6:].lower() == "off" or playerInput[6:].lower() == "disable":
-      if debugMode == False:
-        print("\033[31mDebug is already disabled!\033[0m")
-      else:
-        print("\033[93mDebug mode: \033[31moff\033[0m")
-        debugMode = False
-    elif debugMode == True:
+    if debugMode == True:
       print("\033[93mDebug mode: \033[31moff\033[0m")
       debugMode = False
     elif debugMode == False:
@@ -89,52 +114,64 @@ while True:
 
 
 
+  elif playerInput.lower() == "roomitems":
+    print(f"currentRoomItems: {currentRoomItems}")
+
+
+  
+  elif playerInput.lower() == "name":
+    print("What would you like to be called?")
+    while True:
+      playerInput = input("> ")
+      
+      if len(playerInput) > 20:
+        print("\033[31mName is too long!\033[0m")
+      elif len(playerInput) <= 2:
+        pint("\033[31mName is too short!\033[0m")
+      else:
+        player.name = properNoun(playerInput)
+        print(f"Ok, I will call you {player.color}{player.name}.\033[0m")
+        break
+
+
 
   elif playerInput.lower() in inventory:
-    print(f"\033[95m--------- {playerBag.name} ---------\033[0m")
-    currentItem = 0
     tempList = []
     tempString = ", "
-    while True:
-      try:
-        tempList.append(playerInventory[currentItem].name)
-        currentItem += 1
-        time.sleep(0.05)
-      except IndexError:
-        currentItem = 0
-        tempList = tempString.join(tempList)
-        print("\033[95mITEMS:\033[0m",tempList)
+    for x in playerInventory:
+      tempList.append(x.name)
+    tempList = tempString.join(tempList)
           
-        filledRatio = int(len(playerInventory))/int(playerBag.itemValue)*100
-        #CALCULATES THE PERCENTAGE OF HOW FULL THE BAG IS
-
-        color = ""
-        if filledRatio >= 80:
-          color = "\033[31m" #red
-        elif filledRatio >= 60:
-          color = "\033[93m" #yellow
-        elif filledRatio <= 60:
-          color = "\033[92m" #green
-            
-        print(f"\033[95mCAPACITY: \033[0m({color}{len(playerInventory)}/{playerBag.itemValue}\033[0m)")
-        print(f"\033[95mWALLET: \033[93;4m${playerMoney}\033[0m")
-        print(f"\033[95m--------- {playerBag.name} ---------\033[0m")
-        break
+    filledRatio = len(playerInventory)/int(player.bag.itemValue)*100
+    #CALCULATES THE PERCENTAGE OF HOW FULL THE BAG IS
+    
+    color = percentageToColor(filledRatio, True)
+    
+    print(f"\033[95m--------- {player.bag.name} ---------\033[0m")
+    print(f"\033[95mITEMS: \033[0m{tempList}")
+    print(f"\033[95mCAPACITY: \033[0m({color}{len(playerInventory)}/{player.bag.itemValue}\033[0m)")
+    print(f"\033[95mWALLET: \033[93;4m${placeValue(player.money)}\033[0m")
+    print(f"\033[95m--------- {player.bag.name} ---------\033[0m")
   
+
+
+
+  elif playerInput.lower().startswith("stat") == True:
+    levelUpPersentage = player.xp/xpToLevelUp(player.level)*100
+
+    print(f"\033[95m--------- {player.name} ---------\033[0m")
+    print(f"\033[95mLEVEL: {placeValue(player.level)}")
+    print(statusBar(levelUpPersentage, 20+len(player.name), "\033[92m", "\033[90m"))
+    print(f"\033[95mXP: {player.xp}/{xpToLevelUp(player.level)}")
+    print(f"\033[95m--------- {player.name} ---------\033[0m")
+
 
 
 
   elif playerInput.lower() in helpList:
-    maxLength = len(helpText)
-    currentItemCount = 0
-    while True:
-      try:
-        print(helpText[currentItemCount])
-        time.sleep(0.05)
-        currentItemCount += 1
-      except:
-       break
-  
+    for x in helpText:
+      print(x)
+      time.sleep(0.05)
 
 
 
@@ -154,7 +191,7 @@ while True:
 
 
   elif playerInput.lower().startswith("get") == True:
-    try: bagCapacity = playerBag.itemValue
+    try: bagCapacity = player.bag.itemValue
     except AttributeError:
       print("\033[31mDEBUG: Cannot retrieve value for player's bag slot (AttributeError).\033[0m")
       bagCapacity = 2
@@ -164,19 +201,19 @@ while True:
       print("\033[31mUsage: get [item name] (non-case sensitive): pick up a specific item from the room.\033[0m")
     else:
       if playerInput[4:5] == "$":
-        getMoney(playerInput, playerCoords, playerInventory, currentRoomItems, playerMoney, debugMode)
+        getMoney(playerInput, playerCoords, playerInventory, currentRoomItems, player.money, debugMode)
 
         if getMoney.functionSuccess == True:
-          playerMoney = getMoney.playerMoney
+          player.money = getMoney.playerMoney
           currentRoomItems = getMoney.currentRoomItems
       else:
         if len(playerInventory) < bagCapacity:
-          getItem(playerInput, playerCoords, playerInventory, currentRoomItems, playerBag, playerMoney, debugMode)
+          getItem(playerInput, playerCoords, playerInventory, currentRoomItems, player.bag, player.money, itemData, debugMode)
           
           if getItem.functionSuccess == True:
             playerInventory = getItem.playerInventory
             currentRoomItems = getItem.currentRoomItems
-            playerBag = getItem.playerBag
+            player.bag = getItem.playerBag
         else:
           print(f"\033[31mYou can't carry any more! ({len(playerInventory)}/{bagCapacity})\033[0m")
       
@@ -188,11 +225,19 @@ while True:
     if len(playerInput) <= 5:
       print("\033[31mUsage: drop [item name] (non-case sensitive): drop one of your items in the current room.\033[0m")
     else:
-      dropItem(playerInput, playerCoords, playerInventory, itemData, currentRoomItems, playerMoney)
-      if dropItem.functionSuccess == True:
-        playerInventory = dropItem.playerInventory
-        currentRoomItems = dropItem.currentRoomItems
-        playerMoney = dropItem.playerMoney
+      if playerInput[5:6] == "$":
+        dropMoney(playerInput, playerCoords, playerInventory, currentRoomItems, player.money, debugMode)
+
+        if dropMoney.functionSuccess == True:
+          player.money = dropMoney.playerMoney
+          currentRoomItems = dropMoney.currentRoomItems
+      else:
+        #checks if inventory size is less than bag capacity
+        dropItem(playerInput, playerCoords, playerInventory, itemData, currentRoomItems, player.money, debugMode)
+          
+        if dropItem.functionSuccess == True:
+          playerInventory = dropItem.playerInventory
+          currentRoomItems = dropItem.currentRoomItems
         
 
 
@@ -239,7 +284,7 @@ while True:
           elif equip_region.lower() == "feet":
             playerFeet.append(currentEquip)
           elif equip_region.lower() == "bag":
-            playerBag.append(currentEquip)
+            player.bag.append(currentEquip)
 
         else:
           print("\033[31mYou already have something equipped there!\033[0m")
@@ -274,7 +319,7 @@ while True:
     saveInput = input("\033[92mChoose a slot to save to: (1-3)\n>> ")
     print("\033[0m",end="\r")
     
-    saveProgress(saveInput, playerX, playerY, playerMoney, playerInventory)
+    saveProgress(saveInput, playerX, playerY, player.money, playerInventory)
     
 
 
@@ -291,18 +336,15 @@ while True:
         if loadProgress.loadSuccess == True:
           playerX = int(loadProgress.playerX)
           playerY = int(loadProgress.playerY)
-          playerMoney = int(loadProgress.playerMoney)
+          player.money = int(loadProgress.playerMoney)
+          playerInventory = loadProgress.playerInventory
           firstTimeEnteringRoom = True
           print("\033[92mLoaded successfully!\033[0m")
       except:
         print("\033[31mCould not update player variables to loaded values.\033[0m")
-      try:
-        from items import itemData
-        playerInventory.append(itemData[loadProgress.playerInventory[0]])
-      except IndexError:
-        pass
-      except AttributeError:
-        pass
+
+  
+
 
   
   elif playerInput.lower().startswith("clear") == True:
@@ -323,10 +365,10 @@ while True:
 
 
   elif playerInput.lower() in north:
-    if getRoomExits(playerCoords, "north", roomData) == True:
+    if getRoomExits.north == True:
       playerY = playerY + 1
       firstTimeEnteringRoom = True
-      print("\033[93mYou walk to the NORTH.\033[00m")
+      print("\033[93mYou walk to the NORTH.\033[0m")
     else:
       try:
         print(bumpList[random.randint(0,6)])
@@ -334,10 +376,10 @@ while True:
         print(bumpList[0])
   
   elif playerInput.lower() in south:
-    if getRoomExits(playerCoords, "south", roomData) == True:
+    if getRoomExits.south == True:
       playerY = playerY - 1
       firstTimeEnteringRoom = True
-      print("\033[93mYou walk to the SOUTH.\033[00m")
+      print("\033[93mYou walk to the SOUTH.\033[0m")
     else:
       try:
         print(bumpList[random.randint(0,6)])
@@ -345,10 +387,10 @@ while True:
         print(bumpList[0])
   
   elif playerInput.lower() in east:
-    if getRoomExits(playerCoords, "east", roomData) == True:
+    if getRoomExits.east == True:
       playerX = playerX + 1
       firstTimeEnteringRoom = True
-      print("\033[93mYou walk to the EAST.\033[00m")
+      print("\033[93mYou walk to the EAST.\033[0m")
     else:
       try:
         print(bumpList[random.randint(0,6)])
@@ -356,10 +398,10 @@ while True:
         print(bumpList[0])
   
   elif playerInput.lower() in west:
-    if getRoomExits(playerCoords, "west", roomData) == True:
+    if getRoomExits.west == True:
       playerX = playerX - 1
       firstTimeEnteringRoom = True
-      print("\033[93mYou walk to the WEST.\033[00m")
+      print("\033[93mYou walk to the WEST.\033[0m")
     else:
       try:
         print(bumpList[random.randint(0,6)])
