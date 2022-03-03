@@ -13,17 +13,15 @@ slot1List = {"slot 1","1","slot1"}
 slot2List = {"slot 2","2","slot2"}
 slot3List = {"slot 3","3","slot3"}
 
-bumpList = ["\033[31mYou've bumped into a wall.\033[0m","\033[31mThere's no exit here.\033[0m","\033[31mYou take [0] damage from smacking your face on this wall!\033[0m","\033[31mYou can't go that way.\033[0m","\033[31mThere's something in the way.\033[0m","\033[31mYou walk into a wall.\033[0m","\033[31mYou smack your head on the wall, in hopes an exit will appear.\033[0m"]
+bumpList = ["You've bumped into a wall.","There's no exit here.","You take [1] damage from smacking your face on this wall!","You can't go that way.","There's something in the way.","You walk into a wall.","You smack your head on the wall, in hopes an exit will appear."]
 
-north = {"north","n","up"}
-south = {"south","s","down"}
-east = {"east","e","right"}
-west = {"west","w","left"}
+FUCK = ["all you had to do was ask lol","don't shoot the messenger!!","-blame your aim-","gee i wonder who asked..."]
 
-apst = "'"
+deathList = ["you fat bald bastard","maybe try rlcraft","more fun than a barrel of monkeys","you died? that's pretty cringe tbh","L+Ratio","stop running into walls then..."]
+
 helpText = [
   '\033[95m--------------------- LIST OF COMMANDS -----------------------\033[0m',
-  f'\033[93m"look"\033[0m (alias \033[93m"l"\033[0m) Get information about the room you{apst}re in',
+  f'\033[93m"look"\033[0m (alias \033[93m"l"\033[0m) Get information about the room you\'re in',
   f'\033[93m"map"\033[0m (no alias) Gives you your coordinates (x,y)',
   '\033[93m"get"\033[0m & \033[93m"drop"\033[0m (no aliases) Pick up and drop items in rooms',
   '\033[93m"cls"\033[0m (no alias) Clears the screen, reduces clutter',

@@ -1,4 +1,4 @@
-import time, sys
+import time, sys, math, json
 
 def getRoomName(playerCoords, roomData):
   try:
@@ -76,7 +76,6 @@ def printRoomExits(playerCoords, roomData):
 
 
 def getRoomItems(playerCoords, itemData):
-  import json
   with open("roomobjectdata.json") as json_file:
     try: loadedjsondata = json.load(json_file)
     except: print('\033[31mFailed to load roomobjectdata.json.\033[0m'); return
@@ -151,7 +150,6 @@ def isValidSlot(slot):
 
 
 def saveProgress(slot, playerX, playerY, playerMoney, playerInventory):
-  import json
   saveProgress.functionSuccess = False
   saveFailedText = "\033[31mSave failed.\033[0m"
   
@@ -196,7 +194,6 @@ def saveProgress(slot, playerX, playerY, playerMoney, playerInventory):
 
 
 def loadProgress(slot, debugMode):
-  import json
   loadProgress.loadSuccess = False
   
   if isValidSlot(slot) == False:
@@ -268,7 +265,6 @@ def loadProgress(slot, debugMode):
 
 
 def getSaveSlotData():
-  import json
   getSaveSlotData.slot1 = ["\033[2mSlot 1 - Empty\033[0m",False]
   getSaveSlotData.slot2 = ["\033[2mSlot 2 - Empty\033[0m",False]
   getSaveSlotData.slot3 = ["\033[2mSlot 3 - Empty\033[0m",False]
@@ -297,13 +293,9 @@ def getSaveSlotData():
 
 
 def clearSlot(slot):
-  if isValidSlot(slot) == True:
-    print("\033[93;2mClearing slot...\033[0m")
-    with open(f"slot{slot}.json", "w") as f:
-      print("\033[92mSlot cleared!\033[0m")
-  else:
-    print("\033[31mInvalid slot!\033[0m")
-  return
+  try:
+    with open(f"slot{slot}.json", "w"): return
+  except: return
 
 
 
@@ -389,8 +381,6 @@ def printColor(string, color):
 
 
 def getItem(playerInput, playerCoords, playerInventory, currentRoomItems, playerBag, playerMoney, itemData, debugMode):
-  import json
-  
   addItemToInventory = True
   getItem.playerInventory = playerInventory #a list of objects
   getItem.currentRoomItems = currentRoomItems #a list of objects[0] and an int value[1]
@@ -488,8 +478,6 @@ def getItem(playerInput, playerCoords, playerInventory, currentRoomItems, player
 
 
 def getMoney(playerInput, playerCoords, playerInventory, currentRoomItems, playerMoney, debugMode):
-  import json
-
   getMoney.playerMoney = playerMoney
   getMoney.currentRoomItems = currentRoomItems
   getMoney.functionSuccess = False
@@ -608,7 +596,6 @@ def dropItem(playerInput, playerCoords, playerInventory, itemData, currentRoomIt
   #converts the "convertedRoomItems" list into a dictionary to be merged into roomobjectdata.json
   
   with open("roomobjectdata.json") as json_file:
-    import json
     jsondata = json.load(json_file)
     updatedJsondata = jsondata
   try:
@@ -634,8 +621,6 @@ def dropItem(playerInput, playerCoords, playerInventory, itemData, currentRoomIt
 
 
 def dropMoney(playerInput, playerCoords, playerInventory, currentRoomItems, playerMoney, debugMode):
-  import json
-
   dropMoney.playerMoney = playerMoney
   dropMoney.currentRoomItems = currentRoomItems
   dropMoney.functionSuccess = False
@@ -779,140 +764,139 @@ def fancyPrint(text, delay=0.04):
 
 
 
-def statusBar(persentage=100, size=30, color="\033[0m", bg="\033[2m", char="█"):
+def statusBar(persentage=100, size=30, color="\033[0m", bg="\033[2m", char="█", bgchar="█"):
   bar = ""
   for x in range(size):
     bar += char
+  
   ratio = 100/size
-  persentage = int(persentage/ratio) #determines the number of green boxes to display
-  if persentage < 0: persentage = 0 #if the boxes to print are less than 0, print no boxes instead of a negative
-  return f"{color}{bar[0:persentage]}{bg}{bar[persentage:size]}\033[0m"
+  boxes = int(persentage/ratio) #determines the number of green boxes to display
+  if boxes < 0: boxes = 0 #if the boxes to print are less than 0, print no boxes instead of a negative
+
+  if persentage == 100: return f"{color}{bar[0:boxes]}\033[0m"
+  
+  elif bgchar != char and bgchar != "█":
+    bgbar = ""
+    for x in range(size):
+      bgbar += bgchar
+    return f"{color}{bar[0:boxes]}{bgbar[boxes:size]}\033[0m"
+  
+  else: return f"{color}{bar[0:boxes]}{bg}{bar[boxes:size]}\033[0m"
 
 
 
 class Cursor:
-  def show(flush=True):
+  def show(f=True):
     sys.stdout.write("\033[?25h")
-    if flush == True:
-      sys.stdout.flush()
+    if f == True: sys.stdout.flush()
   
-  def hide(flush=True):
+  def hide(f=True):
     sys.stdout.write("\033[?25l")
-    if flush == True:
-      sys.stdout.flush()
+    if f == True: sys.stdout.flush()
   
-  def moveTo(line=0,column=0,flush=False):
+  def moveTo(line=0,column=0,f=False):
     sys.stdout.write(f"\033[{line};{column}H")
-    if flush == True:
-      sys.stdout.flush()
+    if f == True: sys.stdout.flush()
 
+  def savePos(f=False):
+    sys.stdout.write(f"\0337")
+    if f == True: sys.stdout.flush()
 
-  def up(x=1,r=False,flush=False):
+  def loadPos(f=False):
+    sys.stdout.write(f"\0338")
+    if f == True: sys.stdout.flush()
+
+  
+
+  def up(x=1,r=False,f=False):
     x = abs(x)
     char = ""
     if r == True: char = "\r"
     print(f"\033[{x}A",end=char)
-    if flush == True:
-      sys.stdout.flush()
+    if f == True: sys.stdout.flush()
   
-  def down(x=1,r=False,flush=False):
+  def down(x=1,r=False,f=False):
     x = abs(x)
     char = ""
     if r == True: char = "\r"
     print(f"\033[{x}B",end=char)
-    if flush == True:
-      sys.stdout.flush()
+    if f == True: sys.stdout.flush()
   
-  def right(x=1,r=False,flush=False):
+  def right(x=1,r=False,f=False):
     x = abs(x)
     char = ""
     if r == True: char = "\r"
     print(f"\033[{x}C",end=char)
-    if flush == True:
-      sys.stdout.flush()
+    if f == True: sys.stdout.flush()
   
-  def left(x=1,r=False,flush=False):
+  def left(x=1,r=False,f=False):
     x = abs(x)
     char = ""
     if r == True: char = "\r"
     print(f"\033[{x}D",end=char)
-    if flush == True:
-      sys.stdout.flush()
+    if f == True: sys.stdout.flush()
+
 
 
 
 class ClearScreen:
-  def toEnd(flush=False):
+  def toEnd(f=False):
     sys.stdout.write("\033[0J")
-    #erases from cursor to end of screen
-    if flush == True:
-      sys.stdout.flush()
+    #erases from cursor to end of screen (and returns to the start of the screen)
+    if f == True: sys.stdout.flush()
   
-  def toStart(flush=False):
+  def toStart(f=False):
     sys.stdout.write("\033[1J")
     #erases from cursor to start of screen
-    if flush == True:
-      sys.stdout.flush()
+    if f == True: sys.stdout.flush()
   
-  def screen(flush=False):
+  def screen(f=False):
     sys.stdout.write("\033[2J")
+    sys.stdout.write(f"\033[0;0H")
     #erases until end of screen
-    if flush == True:
-      sys.stdout.flush()
+    if f == True: sys.stdout.flush()
   
-  def saved(flush=False):
+  def saved(f=False):
     sys.stdout.write("\033[3J")
     #erases "saved lines" (I don't know what this does)
-    if flush == True:
-      sys.stdout.flush()
+    if f == True: sys.stdout.flush()
 
 
 
 class ClearLine:
-  def toEnd(flush=False):
+  def toEnd(f=False):
     sys.stdout.write("\033[0K")
     #erases from cursor to end of line
-    if flush == True:
-      sys.stdout.flush()
+    if f == True: sys.stdout.flush()
   
-  def toStart(flush=False):
+  def toStart(f=False):
     sys.stdout.write("\033[1K")
     #erases from cursor to start of line
-    if flush == True:
-      sys.stdout.flush()
+    if f == True: sys.stdout.flush()
   
-  def line(flush=False):
+  def line(f=False):
     sys.stdout.write("\033[2K")
     #erases entire line
-    if flush == True:
-      sys.stdout.flush()
+    if f == True: sys.stdout.flush()
 
 
 
 def space(int):
+  if int <= 0: return ""
   export = " "
   for x in range(1,int):
     export += " "
   return export
-
-
-
-def beep(volume):
-  for x in range(1,volume+1):
-    sys.stdout.write("\a")
-  sys.stdout.flush()
+  
 
 
 
 def percentageToColor(percentage, reverse=False):
-  try: percentage = int(percentage)
-  except TypeError: return
-  
   if reverse == True:
     if percentage >= 66:
       return "\033[31m" #red
     if percentage >= 33:
-      return "\033[38;2;255;255m" #yellow
+      return "\033[93m" #yellow
     if percentage < 33:
       return "\033[92m" #green
   
@@ -920,7 +904,7 @@ def percentageToColor(percentage, reverse=False):
     if percentage >= 66:
       return "\033[92m" #green
     if percentage >= 33:
-      return "\033[38;2;255;255m" #yellow
+      return "\033[93m" #yellow
     if percentage < 33:
       return "\033[31m" #red
 
@@ -963,3 +947,33 @@ def removeAnsi(string, subst=""):
   return re.sub(r'(\x9B|\x1B\[)[0-?]*[ -\/]*[@-~]', subst, string, 0)
   #this code is from https://www.tutorialspoint.com/How-can-I-remove-the-ANSI-escape-sequences-from-a-string-in-python
   #I tried to learn regular expressions myself but escape sequences are so broken it keeps removing the wrong parts of the string, I give up
+
+
+
+def printBorder(length=25,split=False,border="|",line="-"):
+  export = border
+  for x in range(length-2):
+    export += line
+  export += border
+
+  if split == True:
+    list = []
+    list[:0] = export
+    if length % 2 == 0:
+      list[length//2-1] = border
+      list[(length//2)] = border
+      #if number is even
+    else:
+      list[(length//2)] = border
+      #if number is odd
+    export = ""
+    for x in list:
+      export += x
+  
+  return export
+
+
+def toBool(var): #(from string)
+  if var.lower() == "true":
+    return True
+  return False

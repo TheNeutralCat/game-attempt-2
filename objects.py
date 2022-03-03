@@ -1,3 +1,11 @@
+class Settings:
+  def __init__(self, screenWidth=50, doIntroSequence=False, debugMode=False, highlightColor="\033[48;2;255;0;255m"):
+    self.screenWidth = screenWidth
+    self.doIntroSequence = doIntroSequence
+    self.debugMode = debugMode
+    self.highlightColor = highlightColor
+    self.varList = ["screenWidth", "doIntroSequence", "debugMode", "highlightColor"]
+
 class Player:
   def __init__(self, name, health, money, level, xp, color, head, chest, legs, feet, bag):
     self.name = name
@@ -66,6 +74,8 @@ itemData = {
   
   #MISC:
   "rustyKey":Item(1,"Rusty Key","rustyKey","key",0,0,"none",True),
+  "mysteriousPuffs":Item(1,"Mysterious Puffs","mysteriousPuffs","food",0,0,"head",False),
+    
 
   #BACKPACKS:
   "pockets":Item(1,"Pockets","pockets","backpack",2,0,"bag",False),

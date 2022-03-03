@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "game-attempt-2"
+name = "repl_python3_game-attempt-2"
 version = "0.1.0"
 description = ""
 authors = ["CollinRosbrugh <<>>"]
